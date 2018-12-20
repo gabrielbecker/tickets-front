@@ -1,13 +1,13 @@
 <template>
-    <div id="app">
+    <div id="app" class="container">
 
         <nav>
-            <div class="nav-wrapper blue darken-1">
-                <a href="#" class="brand-logo center">Tickets</a>
+            <div class="container-fluid bg-primary text-white sticky-top">
+                <h2 class="center">Tickets</h2>
             </div>
         </nav>
 
-        <div class="container">
+        <div class="footer">
 
             <ul>
                 <li v-for="(error, index) of errors" :key="index">
@@ -15,38 +15,61 @@
                 </li>
             </ul>
 
-            <form @submit.prevent="save">
+            <form>
 
-                <label>Nome</label>
                 <input type="text" placeholder="Nome" v-model="event.name">
 
-                <button class="waves-effect waves-light btn-small">Salvar<i class="material-icons left">save</i></button>
+                <button type="button" class="btn btn-success" @click="event_save(event)">Salvar</button>
 
             </form>
 
-            <table>
+            <br>
+
+            <table class="table table-striped table-bordered" style="width:100%">
 
                 <thead>
 
-                <tr>
-                    <th>NOME</th>
-                    <th>Criação</th>
-                </tr>
+                    <tr>
+                        <th>NOME</th>
+                        <th>Criação</th>
+                        <th></th>
+                    </tr>
 
                 </thead>
 
                 <tbody>
+                <template v-for="event of events">
 
-                <tr v-for="event of events" :key="event.id">
+                    <tr :key="event.id" @click="toggle(event)" class="accordion-toggle"  data-toggle="collapse" data-target="#collapseOne">
 
-                    <td>{{event.name}}</td>
-                    <td>{{event.timestamp}}</td>
-                    <td>
-                        <button @click="update(event)" class="waves-effect btn-small blue darken-1"><i class="material-icons">create</i></button>
-                        <button @click="remove(event)" class="waves-effect btn-small red darken-1"><i class="material-icons">delete_sweep</i></button>
-                    </td>
+                            <td>{{event.name}}</td>
+                            <td>{{event.timestamp}}</td>
+                            <td>
+                                <button @click="event_update(event)" class="btn btn-primary btn-sm"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>
+                                <button @click="event_remove(event)" class="btn btn-danger btn-sm"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                            </td>
 
-                </tr>
+                        </tr>
+                        <tr v-if="opened.includes(event.id)" :event="event.name">
+                            <td colspan="2">
+                                <form>
+
+                                    <input type="text" placeholder="Nome" v-model="ticket.type">
+
+                                    <button type="button" class="btn btn-success" @click="ticket_save(ticket)">Adicionar</button>
+
+                                </form>
+                            </td>
+                        </tr>
+                        <tr v-if="opened.includes(event.id)" v-for="ticket of tickets">
+                            <td>{{ticket.type}}</td>
+                            <td>{{ticket.timestamp}}</td>
+                            <td>
+                                <button @click="ticket_update(ticket)" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>
+                                <button @click="ticket_remove(ticket)" class="btn btn-warning btn-xs"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
+                            </td>
+                        </tr>
+                </template>
 
                 </tbody>
 
@@ -60,6 +83,7 @@
 <script>
 
     import Event from './service/events'
+    import Ticket from './service/tickets'
 
     export default {
 
@@ -67,26 +91,38 @@
             return {
                 event: {
                     id: '',
-                    nome: ''
+                    name: ''
                 },
                 events: [],
-                errors: []
+                errors: [],
+                tickets: [],
+                ticket: {
+                    event: '',
+                    type: ''
+                },
+                opened: [],
             }
         },
 
         mounted() {
-            this.list()
+            this.event_list()
         },
 
         methods:{
 
-            list(){
+            event_list(){
                 Event.list().then(response => {
                     this.events = response.data.results
                 })
             },
 
-            save(){
+            ticket_list(event_id){
+                Ticket.retrive(event_id).then(response => {
+                    this.tickets = response.data.results
+                })
+            },
+
+            event_save(){
 
                 if(!this.event.id) {
 
@@ -94,7 +130,7 @@
                         this.event = {}
                         this.errors = {}
                         alert('Salvo com sucesso!')
-                        this.list()
+                        this.event_list()
                     }).catch(e => {
                         this.errors = e.response.data.name
                     })
@@ -104,7 +140,7 @@
                         this.event = {}
                         this.errors = {}
                         alert('Atualizado com sucesso!')
-                        this.list()
+                        this.event_list()
                     }).catch(e => {
                         this.errors = e.response.data.name
                     })
@@ -112,28 +148,88 @@
 
             },
 
-            update(event) {
+            event_update(event) {
                 this.event = event
             },
 
-            remove(event) {
+            event_remove(event) {
 
                 if(confirm('Deseja excluir o evento?')) {
 
                     Event.delete(event).then(response => {
-                        this.list()
+                        this.event_list()
                         this.errors = {}
                     }).catch(e => {
                         this.errors = e.response.data.name
                     })
 
                 }
+            },
+
+            ticket_update(ticket) {
+                this.ticket = ticket
+            },
+
+            ticket_remove(ticket) {
+
+                if(confirm('Deseja excluir o ingresso?')) {
+
+                    Ticket.delete(ticket).then(response => {
+                        this.event_list()
+                        this.errors = {}
+                    }).catch(e => {
+                        this.errors = e.response.data.name
+                    })
+
+                }
+            },
+
+            ticket_save(){
+
+                if(!this.ticket.id) {
+
+                    Ticket.save(this.ticket).then(response => {
+                        this.ticket = {}
+                        this.errors = {}
+                        alert('Salvo com sucesso!')
+                        this.ticket_list(this.event.name)
+                    }).catch(e => {
+                        this.errors = e.response.data.name
+                    })
+
+                } else {
+                    Ticket.update(this.ticket).then(response => {
+                        this.ticket = {}
+                        this.errors = {}
+                        alert('Atualizado com sucesso!')
+                        this.ticket_list(this.event.name)
+                    }).catch(e => {
+                        this.errors = e.response.data.name
+                    })
+                }
+
+            },
+
+            toggle(event) {
+                const index = this.opened.indexOf(event.id);
+                if (index > -1) {
+                    this.opened.splice(index, 1)
+                } else {
+                    this.opened.push(event.id)
+                }
+
+                this.ticket_list(event.name)
+
             }
 
         }
     }
+
+
 </script>
 
 <style>
+
+
 
 </style>
