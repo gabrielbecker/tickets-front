@@ -56,7 +56,7 @@
 
                                     <input type="text" placeholder="Nome" v-model="ticket.type">
 
-                                    <button type="button" class="btn btn-success" @click="ticket_save(ticket)">Adicionar Ingresso</button>
+                                    <button type="button" class="btn btn-success" @click="ticket_save(ticket)">Salvar Ingresso</button>
 
                                 </form>
                             </td>
@@ -65,7 +65,6 @@
                             <td>{{ticket.type}}</td>
                             <td>{{ticket.timestamp}}</td>
                             <td>
-                                <button @click="ticket_update(ticket)" class="btn btn-info btn-xs"><span class="glyphicon glyphicon-edit" aria-hidden="true"></span></button>
                                 <button @click="ticket_remove(ticket)" class="btn btn-warning btn-xs"><span class="glyphicon glyphicon-remove" aria-hidden="true"></span></button>
                             </td>
                         </tr>
@@ -175,7 +174,7 @@
                 if(confirm('Deseja excluir o ingresso?')) {
 
                     Ticket.delete(ticket).then(response => {
-                        this.event_list()
+                        this.ticket_list(this.event.name)
                         this.errors = {}
                     }).catch(e => {
                         this.errors = e.response.data.name
@@ -184,31 +183,19 @@
                 }
             },
 
-            ticket_save(){
+            ticket_save() {
 
-                if(!this.ticket.id) {
+                this.ticket.event = this.opened
 
-                    this.ticket.event = this.opened
+                Ticket.save(this.ticket).then(response => {
+                    this.ticket = {}
+                    this.errors = {}
+                    alert('Salvo com sucesso!')
+                    this.ticket_list(this.event.name)
+                }).catch(e => {
+                    this.errors = e.response.data.name
+                })
 
-                    Ticket.save(this.ticket).then(response => {
-                        this.ticket = {}
-                        this.errors = {}
-                        alert('Salvo com sucesso!')
-                        this.ticket_list(this.event.name)
-                    }).catch(e => {
-                        this.errors = e.response.data.name
-                    })
-
-                } else {
-                    Ticket.update(this.ticket).then(response => {
-                        this.ticket = {}
-                        this.errors = {}
-                        alert('Atualizado com sucesso!')
-                        this.ticket_list(this.event.name)
-                    }).catch(e => {
-                        this.errors = e.response.data.name
-                    })
-                }
 
             },
 
