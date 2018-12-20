@@ -19,7 +19,7 @@
 
                 <input type="text" placeholder="Nome" v-model="event.name">
 
-                <button type="button" class="btn btn-success" @click="event_save(event)">Salvar</button>
+                <button type="button" class="btn btn-success" @click="event_save(event)">Salvar Evento</button>
 
             </form>
 
@@ -30,7 +30,7 @@
                 <thead>
 
                     <tr>
-                        <th>NOME</th>
+                        <th>Eventos</th>
                         <th>Criação</th>
                         <th></th>
                     </tr>
@@ -56,7 +56,7 @@
 
                                     <input type="text" placeholder="Nome" v-model="ticket.type">
 
-                                    <button type="button" class="btn btn-success" @click="ticket_save(ticket)">Adicionar</button>
+                                    <button type="button" class="btn btn-success" @click="ticket_save(ticket)">Adicionar Ingresso</button>
 
                                 </form>
                             </td>
@@ -100,7 +100,7 @@
                     event: '',
                     type: ''
                 },
-                opened: [],
+                opened: '',
             }
         },
 
@@ -188,6 +188,8 @@
 
                 if(!this.ticket.id) {
 
+                    this.ticket.event = this.opened
+
                     Ticket.save(this.ticket).then(response => {
                         this.ticket = {}
                         this.errors = {}
@@ -211,11 +213,10 @@
             },
 
             toggle(event) {
-                const index = this.opened.indexOf(event.id);
-                if (index > -1) {
-                    this.opened.splice(index, 1)
+                if (this.opened === event.id) {
+                    this.opened = '';
                 } else {
-                    this.opened.push(event.id)
+                    this.opened = event.id;
                 }
 
                 this.ticket_list(event.name)
